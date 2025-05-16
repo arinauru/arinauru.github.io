@@ -42,7 +42,7 @@ def get_games_markup():
     """Основная клавиатура с кнопками"""
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
 
-    english_web_app = types.WebAppInfo(url="https://arinauru.github.io/bot/english_game.html")
+    english_web_app = types.WebAppInfo(url="https://arinauru.github.io/english_game.html")
 
     btn_english = types.KeyboardButton("Игра: Английский", web_app=english_web_app)
     btn_rating = types.KeyboardButton("Рейтинг")
@@ -65,17 +65,17 @@ def get_english_games_markup():
     # Создаем кнопки для разных игр
     snake_game = types.InlineKeyboardButton(
         text="🐍 Грамматическая Змейка",
-        web_app=types.WebAppInfo(url="https://arinauru.github.io/bot/english_game.html")
+        web_app=types.WebAppInfo(url="https://arinauru.github.io/english_game.html")
     )
 
     cards_game = types.InlineKeyboardButton(
         text="🃏 Карточки Словаря",
-        web_app=types.WebAppInfo(url="https://arinauru.github.io/bot/english_game.html")
+        web_app=types.WebAppInfo(url="https://arinauru.github.io/english_game.html")
     )
 
     quiz_game = types.InlineKeyboardButton(
         text="❓ Викторина Времен",
-        web_app=types.WebAppInfo(url="https://arinauru.github.io/bot/english_game.html")
+        web_app=types.WebAppInfo(url="https://arinauru.github.io/english_game.html")
     )
 
     markup.add(snake_game, cards_game, quiz_game)
