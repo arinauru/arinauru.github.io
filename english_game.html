@@ -71,7 +71,6 @@
           align-items: center;
           flex-direction: column;
         }
-
         .score-board {
           font-size: 20px;
           margin-bottom: 10px;
@@ -210,6 +209,7 @@
     display: flex;
     gap: 15px;
 }
+
     </style>
 </head>
 <body>
@@ -394,30 +394,44 @@
             `;
         }
 
-    // Обновляем функцию startGame
     function startGame(gameType) {
         currentGame = gameType;
         menuContainer.style.display = 'none';
         gameContainer.style.display = 'flex';
 
+        // Скрываем все игровые элементы и очищаем состояние
+        document.getElementById('gameCanvas').style.display = 'none';
+        document.getElementById('modalVerbsGame').style.display = 'none';
+
+        // Сбрасываем состояние при каждом запуске игры
         if(gameType === 'snake') {
+            // Полная переинициализация змейки
+            document.getElementById('gameCanvas').style.display = 'block';
             initializeSnakeGame();
         } else if(gameType === 'modal') {
-            updateScoreDisplay();
+            // Сброс состояния модальных глаголов
+            currentQuestionIndex = 0;
+            document.getElementById('modalVerbsGame').style.display = 'block';
             initializeModalGame();
         }
     }
 
-    // Обновляем функцию showMenu
     function showMenu() {
         if(confirm('Вы уверены, что хотите выйти в меню?')) {
             menuContainer.style.display = 'block';
             gameContainer.style.display = 'none';
+
+            // Полный сброс состояния обеих игр
             if(currentGame === 'snake' && snakeGameInterval) {
                 clearInterval(snakeGameInterval);
+                snakeGameInterval = null;
             }
-            // Сбрасываем состояние игр
-            currentQuestionIndex = 0;
+
+            // Очищаем контейнеры игр
+            document.getElementById('modalVerbsGame').innerHTML = '';
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     }
 
