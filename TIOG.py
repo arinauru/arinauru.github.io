@@ -8,24 +8,38 @@ bot = telebot.TeleBot("8194023558:AAHVlbIPSv2ExcB8ZBg4nCl3XYBB2U5zf4g")
 conn = sqlite3.connect('bot_database.db', check_same_thread=False)
 cursor = conn.cursor()
 
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY,
-    username TEXT,
-    score INTEGER DEFAULT 0,
-    best_score INTEGER DEFAULT 0
-)
-''')
-conn.commit()
+
+# Создаем таблицу с проверкой существующих столбцов
+def init_db():
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY,
+        username TEXT,
+        score INTEGER DEFAULT 0,
+        best_score INTEGER DEFAULT 0
+    )
+    ''')
+
+    # Проверяем существование столбца best_score
+    cursor.execute("PRAGMA table_info(users)")
+    columns = [column[1] for column in cursor.fetchall()]
+
+    if 'best_score' not in columns:
+        cursor.execute('ALTER TABLE users ADD COLUMN best_score INTEGER DEFAULT 0')
+
+    conn.commit()
+
+
+init_db()
 
 
 def register_user(user_id, username):
     cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
     if cursor.fetchone() is None:
-        cursor.execute("INSERT INTO users (id, username, score) VALUES (?, ?, ?)", (user_id, username, 0))
+        cursor.execute("INSERT INTO users (id, username, score, best_score) VALUES (?, ?, 0, 0)", (user_id, username))
         conn.commit()
 
-
+'''
 def update_score(user_id, additional_points):
     cursor.execute("SELECT score FROM users WHERE id = ?", (user_id,))
     result = cursor.fetchone()
@@ -34,7 +48,7 @@ def update_score(user_id, additional_points):
         cursor.execute("UPDATE users SET score = ? WHERE id = ?", (new_score, user_id))
         conn.commit()
 
-
+'''
 def get_ratings():
     cursor.execute("SELECT username, best_score FROM users ORDER BY best_score DESC LIMIT 10")
     return cursor.fetchall()
@@ -43,12 +57,12 @@ def get_ratings():
 def update_best_score(user_id, new_score):
     cursor.execute("SELECT best_score FROM users WHERE id = ?", (user_id,))
     result = cursor.fetchone()
-    if result:
-        current_best = result[0]
-        if new_score > current_best:
-            cursor.execute("UPDATE users SET best_score = ? WHERE id = ?", (new_score, user_id))
-            conn.commit()
-
+    if result and new_score > result[0]:
+        cursor.execute(
+            "UPDATE users SET best_score = ? WHERE id = ?",
+            (new_score, user_id)
+        )
+        conn.commit()
 
 def get_games_markup():
     """Основная клавиатура с кнопками"""
@@ -117,7 +131,7 @@ def handle_text(message):
         bot.send_message(message.chat.id, rating_text)
     else:
         bot.send_message(message.chat.id, "Выберите игру из меню или просмотрите рейтинг.")
-        
+
 
 @bot.message_handler(content_types=['web_app_data'])
 def handle_web_app_data(message):
@@ -125,7 +139,7 @@ def handle_web_app_data(message):
         data = message.web_app_data.data
         result = json.loads(data)
 
-        if result.get("game") and "bestScore" in result:
+        if result.get("bestScore"):
             update_best_score(message.from_user.id, result["bestScore"])
             bot.send_message(
                 message.chat.id,
@@ -138,22 +152,18 @@ def handle_web_app_data(message):
 
 @bot.message_handler(content_types=['web_app_data'])
 def handle_web_app_data(message):
-    bot.send_message(message.chat.id, "Обрабатываю результат игры...")
     try:
         data = message.web_app_data.data
         result = json.loads(data)
 
-        if result.get("game") == "english" and "score" in result:
-            update_score(message.from_user.id, result["score"])
-            total_score = result["score"]
+        if result.get("bestScore"):
+            update_best_score(message.from_user.id, result["bestScore"])
             bot.send_message(
                 message.chat.id,
-                f"Вы завершили игру по английскому языку и набрали {total_score} очков!"
+                f"Ваш новый рекорд: {result['bestScore']} очков!"
             )
-        else:
-            bot.send_message(message.chat.id, "Результат получен, но не распознан как английская игра.")
-    except Exception:
-        bot.send_message(message.chat.id, "Ошибка при обработке данных из мини-приложения.")
-
+    except Exception as e:
+        print(f"Error: {e}")
+        bot.send_message(message.chat.id, "Ошибка при обработке данных игры")
 
 bot.polling(none_stop=True, interval=0)
