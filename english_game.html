@@ -377,7 +377,11 @@
         function endModalGame() {
             updateBestScore();
             sessionStorage.removeItem('currentScore'); // Добавлено: очистка sessionStorage
-            const resultData = { game: 'modal', score: score };
+            const resultData = {
+                game: currentGame,
+                bestScore: bestScore  // Отправляем лучший результат вместо текущего счета
+            };
+
             if(typeof Telegram !== 'undefined' && Telegram.WebApp) {
                 Telegram.WebApp.sendData(JSON.stringify(resultData));
             }
@@ -664,9 +668,13 @@
       resultMessage.style.color = 'blue';
       modalBg.style.display = 'flex';
 
-      const resultData = { game: currentGame, score: score };
+      const resultData = {
+            game: currentGame,
+            bestScore: bestScore  // Отправляем лучший результат вместо текущего счета
+      };
+
       if(typeof Telegram !== 'undefined' && Telegram.WebApp) {
-        Telegram.WebApp.sendData(JSON.stringify(resultData));
+            Telegram.WebApp.sendData(JSON.stringify(resultData));
       }
     }
 
