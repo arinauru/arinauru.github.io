@@ -1,101 +1,58 @@
+# bot.py
 import telebot
 from telebot import types
 import sqlite3
 import json
 
-bot = telebot.TeleBot("8194023558:AAHVlbIPSv2ExcB8ZBg4nCl3XYBB2U5zf4g")
+API_TOKEN = "8194023558:AAHVlbIPSv2ExcB8ZBg4nCl3XYBB2U5zf4g"
+bot = telebot.TeleBot(API_TOKEN)
 
+# Подключение к БД
 conn = sqlite3.connect('bot_database.db', check_same_thread=False)
 cursor = conn.cursor()
 
-
-# Создаем таблицу с проверкой существующих столбцов
-def init_db():
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY,
-        username TEXT,
-        score INTEGER DEFAULT 0,
-        best_score INTEGER DEFAULT 0
-    )
-    ''')
-
-    # Проверяем существование столбца best_score
-    cursor.execute("PRAGMA table_info(users)")
-    columns = [column[1] for column in cursor.fetchall()]
-
-    if 'best_score' not in columns:
-        cursor.execute('ALTER TABLE users ADD COLUMN best_score INTEGER DEFAULT 0')
-
-    conn.commit()
-
-
-init_db()
-
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    username TEXT,
+    score INTEGER DEFAULT 0
+)
+''')
+conn.commit()
 
 def register_user(user_id, username):
-    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    cursor.execute("SELECT 1 FROM users WHERE id = ?", (user_id,))
     if cursor.fetchone() is None:
-        cursor.execute("INSERT INTO users (id, username, score, best_score) VALUES (?, ?, 0, 0)", (user_id, username))
-        conn.commit()
-
-'''
-def update_score(user_id, additional_points):
-    cursor.execute("SELECT score FROM users WHERE id = ?", (user_id,))
-    result = cursor.fetchone()
-    if result:
-        new_score = result[0] + additional_points
-        cursor.execute("UPDATE users SET score = ? WHERE id = ?", (new_score, user_id))
-        conn.commit()
-
-'''
-def get_ratings():
-    cursor.execute("SELECT username, best_score FROM users ORDER BY best_score DESC LIMIT 10")
-    return cursor.fetchall()
-
-
-def update_best_score(user_id, new_score):
-    cursor.execute("SELECT best_score FROM users WHERE id = ?", (user_id,))
-    result = cursor.fetchone()
-    if result and new_score > result[0]:
         cursor.execute(
-            "UPDATE users SET best_score = ? WHERE id = ?",
-            (new_score, user_id)
+            "INSERT INTO users (id, username, score) VALUES (?, ?, 0)",
+            (user_id, username)
         )
         conn.commit()
 
-def get_games_markup():
-    """Основная клавиатура с кнопками"""
-    markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+def update_score(user_id, additional_points):
+    cursor.execute("SELECT score FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    old = row[0] if row else 0
+    new = old + additional_points
+    cursor.execute("UPDATE users SET score = ? WHERE id = ?", (new, user_id))
+    conn.commit()
 
-    english_web_app = types.WebAppInfo(url="https://arinauru.github.io/english_game.html")
-
-    btn_english = types.KeyboardButton("Игра: Английский", web_app=english_web_app)
-    btn_rating = types.KeyboardButton("Рейтинг")
-
-    # чтобы не вызывать ошибку
-    # flappy_web_app = types.WebAppInfo(url="https://YOUR_DOMAIN/flappy_birds.html")
-    # pingpong_web_app = types.WebAppInfo(url="https://YOUR_DOMAIN/ping_pong.html")
-    # btn_flappy = types.KeyboardButton("Flappy Birds", web_app=flappy_web_app)
-    # btn_pingpong = types.KeyboardButton("Ping-Pong", web_app=pingpong_web_app)
-
-    # markup.add(btn_english, btn_flappy, btn_pingpong, btn_rating)
-    markup.add(btn_english, btn_rating)
-    return markup
-
-
-def get_english_games_markup():
-    """Инлайн-клавиатура с выбором типа игры"""
-    markup = types.InlineKeyboardMarkup(row_width=1)
-
-    # Создаем кнопки для разных игр
-    snake_game = types.InlineKeyboardButton(
-        text="🐍 Грамматическая Змейка",
-        web_app=types.WebAppInfo(url="https://arinauru.github.io/english_game.html")
+def get_ratings():
+    cursor.execute(
+        "SELECT username, score FROM users ORDER BY score DESC LIMIT 10"
     )
-    markup.add(snake_game)
-    return markup
+    return cursor.fetchall()
 
+def get_games_markup():
+    markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+    # Web App для английской игры
+    english_web = types.WebAppInfo(
+        url="https://juliaiskandarova.github.io/ThreeInOneGame/english_game.html"
+    )
+    btn_eng = types.KeyboardButton("📝 Английский", web_app=english_web)
+    btn_rating = types.KeyboardButton("🏆 Рейтинг")
+    markup.add(btn_eng, btn_rating)
+    return markup
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -106,64 +63,67 @@ def start(message):
         reply_markup=get_games_markup()
     )
 
-
-@bot.message_handler(func=lambda message: message.text == "🎮 Игра: Английский")
-def show_english_games(message):
-    """Обработчик кнопки выбора английских игр"""
-    bot.send_message(
-        message.chat.id,
-        "📚 Выберите тип задания:",
-        reply_markup=get_english_games_markup()
-    )
-
-
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
-    text = message.text.strip()
-    if text == "Рейтинг":
+    if message.text == "🏆 Рейтинг":
         ratings = get_ratings()
         if ratings:
-            rating_text = "🏆 Топ лучших результатов 🏆\n\n"
-            for i, (username, best_score) in enumerate(ratings, 1):
-                rating_text += f"{i}. {username} — {best_score} очков\n"
+            txt = "⭐️ Топ игроков ⭐️\n\n"
+            for i, (user, sc) in enumerate(ratings, 1):
+                txt += f"{i}. {user} — {sc} очков\n"
         else:
-            rating_text = "Рейтинг пока пуст."
-        bot.send_message(message.chat.id, rating_text)
+            txt = "Рейтинг пока пуст."
+        # возвращаем клавиатуру
+        bot.send_message(message.chat.id, txt, reply_markup=get_games_markup())
+
     else:
-        bot.send_message(message.chat.id, "Выберите игру из меню или просмотрите рейтинг.")
-
-
-@bot.message_handler(content_types=['web_app_data'])
-def handle_web_app_data(message):
-    try:
-        data = message.web_app_data.data
-        result = json.loads(data)
-
-        if result.get("bestScore"):
-            update_best_score(message.from_user.id, result["bestScore"])
-            bot.send_message(
-                message.chat.id,
-                f"Ваш новый рекорд: {result['bestScore']} очков!"
-            )
-    except Exception as e:
-        print(f"Error: {e}")
-        bot.send_message(message.chat.id, "Ошибка при обработке данных игры")
-
+        bot.send_message(
+            message.chat.id,
+            "Нажмите кнопку игры или «🏆 Рейтинг».",
+            reply_markup=get_games_markup()
+        )
 
 @bot.message_handler(content_types=['web_app_data'])
 def handle_web_app_data(message):
     try:
-        data = message.web_app_data.data
-        result = json.loads(data)
+        result = json.loads(message.web_app_data.data)
+    except (json.JSONDecodeError, AttributeError):
+        return bot.send_message(
+            message.chat.id,
+            "Неверный формат данных от WebApp.",
+            reply_markup=get_games_markup()
+        )
 
-        if result.get("bestScore"):
-            update_best_score(message.from_user.id, result["bestScore"])
-            bot.send_message(
-                message.chat.id,
-                f"Ваш новый рекорд: {result['bestScore']} очков!"
-            )
-    except Exception as e:
-        print(f"Error: {e}")
-        bot.send_message(message.chat.id, "Ошибка при обработке данных игры")
+    if "score" not in result or "game" not in result:
+        return bot.send_message(
+            message.chat.id,
+            "Нет данных по очкам.",
+            reply_markup=get_games_markup()
+        )
 
-bot.polling(none_stop=True, interval=0)
+    user_id = message.from_user.id
+    session_points = result["score"]
+    game = result["game"]
+
+    # Сохраняем набранные очки
+    update_score(user_id, session_points)
+
+    # Формируем текст ответа
+    if game == "english":
+        text = f"Вы завершили игру «Английский». Ваш рекорд – {session_points} очков!"
+    elif game == "snake":
+        text = f"Вы завершили «Змейку». Ваш рекорд – {session_points} очков!"
+    elif game == "modal":
+        text = f"Вы завершили «Модальные глаголы». Ваш результат – {session_points} очков!"
+    else:
+        text = f"Игра «{game}» завершена. Результат – {session_points}."
+
+    # Отправляем сообщение и возвращаем клавиатуру
+    bot.send_message(
+        message.chat.id,
+        text,
+        reply_markup=get_games_markup()
+    )
+
+if __name__ == "__main__":
+    bot.polling(none_stop=True, interval=0)
