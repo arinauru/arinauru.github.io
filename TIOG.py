@@ -47,7 +47,7 @@ def get_games_markup():
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     # Web App для английской игры
     english_web = types.WebAppInfo(
-        url="https://juliaiskandarova.github.io/ThreeInOneGame/english_game.html"
+        url="https://arinauru.github.io/english_game.html"
     )
     btn_eng = types.KeyboardButton("📝 Английский", web_app=english_web)
     btn_rating = types.KeyboardButton("🏆 Рейтинг")
