@@ -222,7 +222,7 @@
       <span id="bestScore">Best: 0</span>
     </div>
     <!-- Кнопка выхода теперь внутри game-area и видна только в играх -->
-    <div class="exit-button" onclick="exitGame()">× Выход в меню</div>
+    <div class="exit-button" onclick="returnToMenu()">× Выход в меню</div>
     <div id="touchControls" class="touch-controls">
       <button data-dir="up">↑</button>
       <button data-dir="left">←</button>
@@ -299,20 +299,14 @@
       gameArea.classList.remove('active');
     }
 
-    function exitGame() {
-      // Отправляем текущие очки в бота
-      Telegram.WebApp.sendData(JSON.stringify({
-          game: currentGame,
-          score: score,
-          stage: 'exit'
-      }));
-
-      // Показываем меню
-      showMenu();
-
+    // Новая функция для возврата в меню
+    function returnToMenu() {
       // Сохраняем лучший результат
       bestScore = Math.max(bestScore, score);
       localStorage.setItem('bestScore', bestScore);
+      
+      // Просто показываем меню, не отправляем данные в бота
+      showMenu();
     }
 
     function startGame(type) {
@@ -376,7 +370,7 @@
       bestScore = Math.max(bestScore, score);
       localStorage.setItem('bestScore', bestScore);
 
-      // Отправляем результаты в бота
+      // Отправляем результаты в бота только при завершении игры
       Telegram.WebApp.sendData(JSON.stringify({
           game: 'modal',
           score: score
@@ -541,7 +535,7 @@
       bestScore = Math.max(bestScore, score);
       localStorage.setItem('bestScore', bestScore);
 
-      // Отправляем результаты в бота
+      // Отправляем результаты в бота только при завершении игры
       Telegram.WebApp.sendData(JSON.stringify({
           game: 'snake',
           score: score
