@@ -105,7 +105,7 @@ def handle_web_app_data(message):
     session_points = result["score"]
     game = result["game"]
 
-    # Сохраняем набранные очки
+    # Сохраняем набранные очки (даже при выходе)
     update_score(user_id, session_points)
 
     # Формируем текст ответа
