@@ -297,7 +297,6 @@
       clearState();
       menuContainer.style.display = 'block';
       gameArea.classList.remove('active');
-      gameArea.style.display = 'none';
     }
 
     function exitGame() {
@@ -321,7 +320,6 @@
       currentGame = type;
       menuContainer.style.display = 'none';
       gameArea.classList.add('active');
-      gameArea.style.display = 'none';
       bestScore = parseInt(localStorage.getItem('bestScore')) || 0;
       updateScoreDisplay();
       if (type === 'snake') initSnake();
