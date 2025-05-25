@@ -5,7 +5,7 @@
   <title>Three-in-One Game</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-        /* Базовые стили */
+    /* Базовые стили */
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -86,7 +86,7 @@
       pointer-events: none;
     }
 
-    /* Кнопка выхода в меню */
+    /* Кнопка выхода в меню (теперь внутри game-area) */
     .exit-button {
       position: absolute;
       top: 12px;
@@ -98,6 +98,10 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       cursor: pointer;
       z-index: 1002;
+      display: none; /* Скрыта по умолчанию */
+    }
+    .game-area.active .exit-button {
+      display: block; /* Показываем только в активной игре */
     }
 
     /* Тач-кнопки */
@@ -200,13 +204,10 @@
         font-size: 12px;
       }
     }
-
-
   </style>
 </head>
 <body>
   <!-- Главное меню -->
-  <div class="exit-button" onclick="exitGame()">× Выход в меню</div>
   <div class="menu-container" id="menuContainer">
     <h1 class="game-title">Выберите задание</h1>
     <button class="game-button" onclick="startGame('snake')">🐍 Грамматическая Змейка</button>
@@ -220,8 +221,8 @@
       <span id="scoreBoard">Score: 0</span> |
       <span id="bestScore">Best: 0</span>
     </div>
-    <!-- Крестик теперь вызывает exitGame -->
-    <div class="exit-button" onclick="exitGame()">× Меню</div>
+    <!-- Кнопка выхода теперь внутри game-area и видна только в играх -->
+    <div class="exit-button" onclick="exitGame()">× Выход в меню</div>
     <div id="touchControls" class="touch-controls">
       <button data-dir="up">↑</button>
       <button data-dir="left">←</button>
@@ -298,22 +299,21 @@
       gameArea.classList.remove('active');
     }
 
-    // НОВАЯ функция выхода — шлёт текущие очки и возвращает в меню
     function exitGame() {
-    // Отправляем текущие очки в бота
-    Telegram.WebApp.sendData(JSON.stringify({
-        game: currentGame,
-        score: score,
-        stage: 'exit'
-    }));
+      // Отправляем текущие очки в бота
+      Telegram.WebApp.sendData(JSON.stringify({
+          game: currentGame,
+          score: score,
+          stage: 'exit'
+      }));
 
-    // Показываем меню
-    showMenu();
+      // Показываем меню
+      showMenu();
 
-    // Сохраняем лучший результат
-    bestScore = Math.max(bestScore, score);
-    localStorage.setItem('bestScore', bestScore);
-}
+      // Сохраняем лучший результат
+      bestScore = Math.max(bestScore, score);
+      localStorage.setItem('bestScore', bestScore);
+    }
 
     function startGame(type) {
       clearState();
@@ -326,7 +326,7 @@
       else if (type === 'modal') initModal();
     }
 
-       // === ИГРА: МОДАЛЬНЫЕ ГЛАГОЛЫ ===
+    // === ИГРА: МОДАЛЬНЫЕ ГЛАГОЛЫ ===
     function initModal() {
       // прячем ввод и кнопку Check
       uAnswer.style.display = 'none';
@@ -373,26 +373,26 @@
     }
 
     function endModalGame() {
-    bestScore = Math.max(bestScore, score);
-    localStorage.setItem('bestScore', bestScore);
+      bestScore = Math.max(bestScore, score);
+      localStorage.setItem('bestScore', bestScore);
 
-    // Отправляем результаты в бота
-    Telegram.WebApp.sendData(JSON.stringify({
-        game: 'modal',
-        score: score
-    }));
+      // Отправляем результаты в бота
+      Telegram.WebApp.sendData(JSON.stringify({
+          game: 'modal',
+          score: score
+      }));
 
-    // Показываем результаты
-    qText.textContent = `Игра окончена! Результат: ${score}/${modalVerbsData.length}.`;
-    answersWrap.innerHTML = '';
-    resMsg.textContent = '';
-    closeBtn.textContent = 'Закрыть';
-    closeBtn.onclick = () => {
-        modalBg.style.display = 'none';
-        showMenu(); // Добавлено: возврат в меню после закрытия
-    };
-    modalBg.style.display = 'flex';
-}
+      // Показываем результаты
+      qText.textContent = `Игра окончена! Результат: ${score}/${modalVerbsData.length}.`;
+      answersWrap.innerHTML = '';
+      resMsg.textContent = '';
+      closeBtn.textContent = 'Закрыть';
+      closeBtn.onclick = () => {
+          modalBg.style.display = 'none';
+          showMenu();
+      };
+      modalBg.style.display = 'flex';
+    }
 
     // === ИГРА: ЗМЕЙКА ===
     function initSnake() {
@@ -537,28 +537,28 @@
     }
 
     function endSnake() {
-    clearInterval(snakeInterval);
-    bestScore = Math.max(bestScore, score);
-    localStorage.setItem('bestScore', bestScore);
+      clearInterval(snakeInterval);
+      bestScore = Math.max(bestScore, score);
+      localStorage.setItem('bestScore', bestScore);
 
-    // Отправляем результаты в бота
-    Telegram.WebApp.sendData(JSON.stringify({
-        game: 'snake',
-        score: score
-    }));
+      // Отправляем результаты в бота
+      Telegram.WebApp.sendData(JSON.stringify({
+          game: 'snake',
+          score: score
+      }));
 
-    // Показываем результаты
-    qText.textContent = `Игра окончена! Вы набрали ${score} очков.`;
-    uAnswer.style.display = 'none';
-    checkBtn.style.display = 'none';
-    resMsg.style.color = 'blue';
-    closeBtn.textContent = 'Закрыть';
-    closeBtn.onclick = () => {
-        modalBg.style.display = 'none';
-        showMenu(); // Добавлено: возврат в меню после закрытия
-    };
-    modalBg.style.display = 'flex';
-}
+      // Показываем результаты
+      qText.textContent = `Игра окончена! Вы набрали ${score} очков.`;
+      uAnswer.style.display = 'none';
+      checkBtn.style.display = 'none';
+      resMsg.style.color = 'blue';
+      closeBtn.textContent = 'Закрыть';
+      closeBtn.onclick = () => {
+          modalBg.style.display = 'none';
+          showMenu();
+      };
+      modalBg.style.display = 'flex';
+    }
   </script>
 </body>
 </html>
