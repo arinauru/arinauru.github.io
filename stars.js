@@ -2,51 +2,58 @@ const canvas = document.getElementById("stars");
 const ctx = canvas.getContext("2d");
 
 let stars = [];
-const starCount = 120;
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 function createStars() {
   stars = [];
-  for (let i = 0; i < starCount; i++) {
+
+  for (let i = 0; i < 90; i++) {
     stars.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      radius: Math.random() * 2,
-      speed: Math.random() * 1.5 + 0.3,
-      opacity: Math.random() * 0.8 + 0.2
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 1.8 + 0.5,
+      speed: Math.random() * 0.45 + 0.15,
+      opacity: Math.random() * 0.5 + 0.25
     });
   }
 }
 
-function drawStars() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function animate() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-  for (let star of stars) {
+  stars.forEach(star => {
     ctx.beginPath();
-    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+
+    ctx.fillStyle =
+      `rgba(110, 86, 207, ${star.opacity})`;
+
     ctx.fill();
 
     star.y += star.speed;
 
-    if (star.y > canvas.height) {
+    if (star.y > window.innerHeight + 5) {
       star.y = -5;
-      star.x = Math.random() * canvas.width;
+      star.x = Math.random() * window.innerWidth;
     }
-  }
+  });
 
-  requestAnimationFrame(drawStars);
+  requestAnimationFrame(animate);
 }
 
 window.addEventListener("resize", () => {
-  resizeCanvas();
+  resize();
   createStars();
 });
 
-resizeCanvas();
+resize();
 createStars();
-drawStars();
+animate();
