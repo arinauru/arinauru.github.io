@@ -333,3 +333,14 @@ h1 {
     margin: 25px auto 0;
   }
 }
+.education-item {
+  margin-bottom: 32px;
+}
+
+.education-item h3 {
+  margin-bottom: 8px;
+}
+
+.education-item p {
+  margin: 4px 0;
+}
