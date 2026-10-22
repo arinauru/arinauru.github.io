@@ -288,3 +288,48 @@ h1 {
     flex-direction: column;
   }
 }
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-content {
+  padding-right: 390px;
+}
+
+.hero-photo {
+  position: absolute;
+  right: max(40px, calc((100vw - 1100px) / 2));
+  top: 52%;
+  transform: translateY(-50%);
+  width: 300px;
+  height: 375px;
+  object-fit: cover;
+  border-radius: 28px;
+  box-shadow: 0 25px 70px rgba(54, 40, 110, 0.20);
+  border: 1px solid rgba(110, 86, 207, 0.18);
+  z-index: 2;
+}
+
+#stars {
+  opacity: 0.9;
+}
+
+@media (max-width: 900px) {
+  .hero-content {
+    padding-right: 0;
+    padding-bottom: 50px;
+  }
+
+  .hero-photo {
+    position: relative;
+    display: block;
+    top: auto;
+    right: auto;
+    transform: none;
+    width: min(300px, calc(100% - 40px));
+    height: auto;
+    aspect-ratio: 4 / 5;
+    margin: 25px auto 0;
+  }
+}
